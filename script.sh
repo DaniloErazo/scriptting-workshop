@@ -284,7 +284,7 @@ gestion_usuarios() {
 
 
 gestion_deptos() {
-   |clear
+    clear
     echo "Menú de gestión de departamentos"
     echo "1. Crear departamento"
     echo "2. Eliminar departamento"
