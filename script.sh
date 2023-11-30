@@ -119,6 +119,12 @@ crear_departamento() {
         echo "El departamento $nuevo_depto ya existe."
     else
         sudo groupadd "$nuevo_depto"
+		
+		#Guardar los datos del usuario en archivo
+			archivo=datos_departamentos
+			estado=habilitado
+			echo "$nuevo_depto:$estado" >> $archivo
+		
         echo "Departamento $nuevo_depto creado correctamente."
     fi
 
@@ -133,6 +139,9 @@ eliminar_departamento() {
 
     if grep -q "^$depto_a_eliminar:" /etc/group; then
         sudo groupdel "$depto_a_eliminar"
+		
+		sed -i "s/^\($depto_a_eliminar:\)habilitado/\1deshabilitado/" datos_departamentos
+		
         echo "Departamento $depto_a_eliminar eliminado correctamente."
     else
         echo "El departamento $depto_a_eliminar no existe."
@@ -155,6 +164,9 @@ modificar_departamento() {
             echo "El nuevo nombre ya está en uso."
         else
             sudo groupmod -n "$nuevo_nombre_depto" "$depto_a_modificar"
+			
+			sed -i "s/$depto_a_modificar:/$nuevo_nombre_depto:/" datos_departamentos
+			
             echo "Departamento $depto_a_modificar modificado a $nuevo_nombre_depto correctamente."
         fi
     else
@@ -174,6 +186,9 @@ assign_depto() {
     if id "$nombre_usuario" &>/dev/null; then
         if grep -q "^$nombre_departamento:" /etc/group; then
             sudo usermod -aG "$nombre_departamento" "$nombre_usuario"
+			
+			echo "$nombre_usuario:$nombre_departamento:" >> datos_departamentos_usuarios
+			
             echo "Usuario $nombre_usuario agregado al departamento $nombre_departamento."
         else
             echo "El departamento $nombre_departamento no existe."
@@ -194,6 +209,9 @@ unassign_depto() {
 
     if grep -q "^$nombre_departamento:" /etc/group; then
         sudo gpasswd -d "$nombre_usuario" "$nombre_departamento"
+		
+		sed -i "/$nombre_usuario:$nombre_departamento:/d" datos_departamentos_usuarios
+		
         echo "Usuario $nombre_usuario eliminado del departamento $nombre_departamento."
     else
         echo "El departamento $nombre_departamento no existe."
@@ -201,30 +219,6 @@ unassign_depto() {
 
     read -p "Presione Enter para continuar..."
     asignacion_deptos
-}
-
-asignacion_deptos() {
-    clear
-    echo "Menú de asignación de departamentos"
-    echo "1. Asignar usuario a departamento"
-    echo "2. Eliminar usuario de departamento"
-    echo "3. Volver al menú principal"
-    read -p "Ingrese su opción: " opcion_asign
-    
-    case $opcion_asign in 
-    	1) assign_depto
-    	   ;;
-    	
-    	2) unassign_depto 
-    	   ;;
-    	   
-    	3) main_menu
-    	   ;;
-    	
-    	*) echo "Opción inválida. Intente de nuevo."
-            asignacion_deptos
-            ;;
-    esac
 }
 
 gestion_usuarios() {
@@ -289,7 +283,29 @@ gestion_deptos() {
     esac
 }
 
-
+asignacion_deptos() {
+    clear
+    echo "Menú de asignación de departamentos"
+    echo "1. Asignar usuario a departamento"
+    echo "2. Eliminar usuario de departamento"
+    echo "3. Volver al menú principal"
+    read -p "Ingrese su opción: " opcion_asign
+    
+    case $opcion_asign in 
+    	1) assign_depto
+    	   ;;
+    	
+    	2) unassign_depto 
+    	   ;;
+    	   
+    	3) main_menu
+    	   ;;
+    	
+    	*) echo "Opción inválida. Intente de nuevo."
+            asignacion_deptos
+            ;;
+    esac
+}
 
 gestion_logs() {
     clear
@@ -323,14 +339,12 @@ main_menu() {
         4)
             gestion_logs
             ;;
-            
         5) 
-	   gestion_sistema
-           ;;
-           
+			gestion_sistema
+            ;;
         6) 
-           rastrear_actividades
-	   ;;
+            rastrear_actividades
+			;;
         7)
             exit 0
             ;;
