@@ -49,6 +49,7 @@ deshabilitar_usuario() {
         sudo userdel -f "$usuario_a_borrar"  
 		
 		sed -i "s/^\($usuario_a_borrar:[^:]*:\)habilitado/\1deshabilitado/" datos_usuarios
+		sed -i "/$usuario_a_borrar:/d" datos_departamentos_usuarios
 
         echo "El usuario $usuario_a_borrar ha sido borrado del sistema."
     else
@@ -97,8 +98,11 @@ modificar_usuario() {
             else
                 sudo usermod -l "$nuevo_nombre_usuario" "$usuario_a_modificar"
                 sudo groupmod -n "$nuevo_nombre_usuario" "$usuario_a_modificar"
+				
                 sed -i "s/$usuario_a_modificar:/$nuevo_nombre_usuario:/" datos_usuarios
-                echo "Usuario $usuario_a_modificar modificado a $nuevo_nombre_usuario correctamente."
+                sed -i "s/$usuario_a_modificar:/$nuevo_nombre_usuario:/" datos_departamentos_usuarios
+				
+				echo "Usuario $usuario_a_modificar modificado a $nuevo_nombre_usuario correctamente."
             fi
         fi
     else
@@ -141,6 +145,7 @@ eliminar_departamento() {
         sudo groupdel "$depto_a_eliminar"
 		
 		sed -i "s/^\($depto_a_eliminar:\)habilitado/\1deshabilitado/" datos_departamentos
+		sed -i "/$depto_a_eliminar:/d" datos_departamentos_usuarios
 		
         echo "Departamento $depto_a_eliminar eliminado correctamente."
     else
@@ -166,6 +171,7 @@ modificar_departamento() {
             sudo groupmod -n "$nuevo_nombre_depto" "$depto_a_modificar"
 			
 			sed -i "s/$depto_a_modificar:/$nuevo_nombre_depto:/" datos_departamentos
+            sed -i "s/$depto_a_modificar:/$nuevo_nombre_depto:/" datos_departamentos_usuarios
 			
             echo "Departamento $depto_a_modificar modificado a $nuevo_nombre_depto correctamente."
         fi
