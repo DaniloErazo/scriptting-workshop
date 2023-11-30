@@ -329,7 +329,8 @@ main_menu() {
     echo "3. Asignación de usuarios a departamentos"
     echo "4. Gestión de logs"
     echo "5. Gestión del sistema"
-    echo "6. Salir"
+    echo "6. Gestión de actividades de usuarios"
+    echo "7. Salir"
     read -p "Ingrese su opción: " opcion
 
     case $opcion in
@@ -349,7 +350,11 @@ main_menu() {
         5) 
 	   gestion_sistema
            ;;
-        6)
+           
+        6) 
+           rastrear_actividades
+	   ;;
+        7)
             exit 0
             ;;
         *)
@@ -361,3 +366,4 @@ main_menu() {
 
 main_menu
 source gestion_sistema.sh
+source gestion_actividades.sh
