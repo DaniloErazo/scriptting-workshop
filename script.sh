@@ -11,28 +11,31 @@ crear_usuario() {
         read -p "Presione Enter para continuar..."
         gestion_usuarios 
     else 
-        # Solicitar contraseña para el nuevo usuario
-        read -s -p "Ingrese una contraseña para el nuevo usuario: " passwd
-        echo
+		if grep -q "^$nuevo_usuario:" datos_usuarios; then
+            echo "El usuario está deshabilitado"
+            read -p "Presione Enter para volver al menu..."
+            gestion_usuarios
+        else
+			# Solicitar contraseña para el nuevo usuario
+			read -s -p "Ingrese una contraseña para el nuevo usuario: " passwd
+			echo
+			# Crear el usuario con el comando useradd
+			sudo useradd -m -s /bin/bash "$nuevo_usuario"
+			# Establecer la contraseña para el nuevo usuario
+			echo "$nuevo_usuario:$passwd" | sudo chpasswd
 
-        # Crear el usuario con el comando useradd
-        sudo useradd -m -s /bin/bash "$nuevo_usuario"
+			#Guardar los datos del usuario en archivo
+			archivo=datos_usuarios
+			estado=habilitado
+			echo "$nuevo_usuario:$passwd:$estado" >> $archivo
 
-        #Guardar los datos del usuario en archivo
-        archivo=datos_usuarios
-        estado=habilitado
-        echo "$nuevo_usuario:$passwd:$estado" >> $archivo
-        # Establecer la contraseña para el nuevo usuario
-        echo "$nuevo_usuario:$passwd" | sudo chpasswd
-
-        echo "Usuario $nuevo_usuario creado correctamente."
+			echo "Usuario $nuevo_usuario creado correctamente."
+		fi
     fi
-
 
     read -p "Presione Enter para continuar..."
     gestion_usuarios # Volver al menú de gestión de usuarios
 }
-
 
 deshabilitar_usuario() {
     clear
@@ -44,6 +47,8 @@ deshabilitar_usuario() {
     	
         # Eliminar el usuario y su directorio de inicio
         sudo userdel -f "$usuario_a_borrar"  
+		
+		sed -i "s/^\($usuario_a_borrar:[^:]*:\)habilitado/\1deshabilitado/" datos_usuarios
 
         echo "El usuario $usuario_a_borrar ha sido borrado del sistema."
     else
@@ -52,6 +57,27 @@ deshabilitar_usuario() {
 
     read -p "Presione Enter para continuar..."
     gestion_usuarios # Volver al menú de gestión de usuarios
+}
+
+habilitar_usuario() {
+    clear
+    echo "Habilitar usuario"
+    read -p "Ingrese el nombre del usuario a habilitar: " usuario_a_habilitar
+
+    if id "$usuario_a_habilitar" &>/dev/null; then
+        echo "El usuario $usuario_a_habilitar se encuentra habilitado."
+    else
+        sudo useradd -m -s /bin/bash "$usuario_a_habilitar"
+        passwd=$(grep "^$usuario_a_habilitar:" datos_usuarios | cut -d: -f2)
+        echo "$usuario_a_habilitar:$passwd" | sudo chpasswd
+
+        sed -i "s/^\($usuario_a_habilitar:[^:]*:\)deshabilitado/\1habilitado/" datos_usuarios
+
+        echo "El usuario $usuario_a_habilitar ha sido habilitado"
+    fi
+
+    read -p "Presione Enter para continuar..."
+    gestion_usuarios
 }
 
 modificar_usuario() {
@@ -66,8 +92,14 @@ modificar_usuario() {
         if id "$nuevo_nombre_usuario" &>/dev/null; then
             echo "El nuevo nombre de usuario ya está en uso."
         else
-            sudo usermod -l "$nuevo_nombre_usuario" "$usuario_a_modificar"
-            echo "Usuario $usuario_a_modificar modificado a $nuevo_nombre_usuario correctamente."
+            if grep -q "^$nuevo_nombre_usuario:" datos_usuarios; then
+                echo "El nuevo nombre de usuario ya está en uso, pero el usuario está deshabilitado"
+            else
+                sudo usermod -l "$nuevo_nombre_usuario" "$usuario_a_modificar"
+                sudo groupmod -n "$nuevo_nombre_usuario" "$usuario_a_modificar"
+                sed -i "s/$usuario_a_modificar:/$nuevo_nombre_usuario:/" datos_usuarios
+                echo "Usuario $usuario_a_modificar modificado a $nuevo_nombre_usuario correctamente."
+            fi
         fi
     else
         echo "El usuario $usuario_a_modificar no existe."
@@ -76,36 +108,6 @@ modificar_usuario() {
     read -p "Presione Enter para continuar..."
     gestion_usuarios 
 }
-
-gestion_usuarios() {
-    clear
-    echo "Menú de gestión de usuarios"
-    echo "1. Crear usuario"
-    echo "2. Deshabilitar usuario"
-    echo "3. Modificar usuario"
-    echo "4. Volver al menú principal"
-    read -p "Ingrese su opción: " opcion_usuarios
-
-    case $opcion_usuarios in
-        1)
-            crear_usuario
-            ;;
-        2)
-            deshabilitar_usuario
-            ;;
-        3)
-            modificar_usuario
-            ;;
-        4)
-            main_menu 
-            ;;
-        *)
-            echo "Opción inválida. Intente de nuevo."
-            gestion_usuarios 
-            ;;
-    esac
-}
-
 
 crear_departamento() {
     clear
@@ -123,7 +125,6 @@ crear_departamento() {
     read -p "Presione Enter para continuar..."
     gestion_deptos 
 }
-
 
 eliminar_departamento() {
     clear
@@ -164,38 +165,6 @@ modificar_departamento() {
     gestion_deptos
 }
 
-
-gestion_deptos() {
-    clear
-    echo "Menú de gestión de departamentos"
-    echo "1. Crear departamento"
-    echo "2. Eliminar departamento"
-    echo "3. Modificar departamento"
-    echo "4. Volver al menú principal"
-    read -p "Ingrese su opción: " opcion_deptos
-
-    case $opcion_deptos in
-        1)
-            crear_departamento
-            ;;
-        2)
-            eliminar_departamento
-            ;;
-        3)
-            modificar_departamento
-            ;;
-        4)
-            main_menu 
-            ;;
-        *)
-            echo "Opción inválida. Intente de nuevo."
-            gestion_deptos
-            ;;
-    esac
-}
-
-
-
 assign_depto() {
     clear
     echo "Asignar usuario a departamento"
@@ -234,7 +203,6 @@ unassign_depto() {
     asignacion_deptos
 }
 
-
 asignacion_deptos() {
     clear
     echo "Menú de asignación de departamentos"
@@ -264,8 +232,9 @@ gestion_usuarios() {
     echo "Menú de gestión de usuarios"
     echo "1. Crear usuario"
     echo "2. Deshabilitar usuario"
-    echo "3. Modificar usuario"
-    echo "4. Volver al menú principal"
+	echo "3. Habilitar usuario"
+    echo "4. Modificar usuario"
+    echo "5. Volver al menú principal"
     read -p "Ingrese su opción: " opcion_usuarios
 
     case $opcion_usuarios in
@@ -276,9 +245,12 @@ gestion_usuarios() {
             deshabilitar_usuario
             ;;
         3)
+			habilitar_usuario
+			;;
+		4)
             modificar_usuario
             ;;
-        4)
+        5)
             main_menu 
             ;;
         *)
@@ -287,7 +259,6 @@ gestion_usuarios() {
             ;;
     esac
 }
-
 
 gestion_deptos() {
     clear
