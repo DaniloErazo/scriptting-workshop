@@ -10,19 +10,25 @@ crear_usuario() {
         echo "El usuario $nuevo_usuario ya existe."
         read -p "Presione Enter para continuar..."
         gestion_usuarios 
+    else 
+        # Solicitar contraseña para el nuevo usuario
+        read -s -p "Ingrese una contraseña para el nuevo usuario: " passwd
+        echo
+
+        # Crear el usuario con el comando useradd
+        sudo useradd -m -s /bin/bash "$nuevo_usuario"
+
+        #Guardar los datos del usuario en archivo
+        archivo=datos_usuarios
+        estado=habilitado
+        echo "$nuevo_usuario:$passwd:$estado" >> $archivo
+        # Establecer la contraseña para el nuevo usuario
+        echo "$nuevo_usuario:$passwd" | sudo chpasswd
+
+        echo "Usuario $nuevo_usuario creado correctamente."
     fi
 
-    # Solicitar contraseña para el nuevo usuario
-    read -s -p "Ingrese una contraseña para el nuevo usuario: " passwd
-    echo
 
-    # Crear el usuario con el comando useradd
-    sudo useradd -m -s /bin/bash "$nuevo_usuario"
-
-    # Establecer la contraseña para el nuevo usuario
-    echo "$nuevo_usuario:$passwd" | sudo chpasswd
-
-    echo "Usuario $nuevo_usuario creado correctamente."
     read -p "Presione Enter para continuar..."
     gestion_usuarios # Volver al menú de gestión de usuarios
 }
