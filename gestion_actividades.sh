@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 rastrear_actividades() {
     clear
     echo "Menú de rastreo de actividades de usuarios"
@@ -38,7 +37,28 @@ rastrear_actividades() {
 
 actividad_inicio_sesion() {
     echo "Actividad de inicio de sesión:"
-    last
+	echo "1. Ver la actividad de un usuario"
+	echo "2. Ver toda la actividad"
+	echo "3. Volver al menu de rastrear actividades"
+	read -p "Seleccione una opción: " opcion
+	
+	case $opcion in 
+		1)
+			read -p "Ingrese el nombre del usuario: " usuario_a_rastrear
+			last | grep "$usuario_a_rastrear"
+			;;
+		2)
+			last
+			;;
+		3)
+			rastrear_actividades
+			;;
+		*)
+			echo "Opción no válida."
+			rastrear_actividades
+			;;
+	esac
+	
     read -p "Presione Enter para continuar..."
     rastrear_actividades
 }
