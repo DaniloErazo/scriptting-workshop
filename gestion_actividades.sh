@@ -73,7 +73,7 @@ actividad_comandos_ejecutados() {
 	case $opcion in
 		1)
 			read -p "Ingrese el nombre del usuario: " usuario_a_rastrear
-			cat /var/log/auth.log | grep 'sudo\|su\|runuser' | grep -E 'COMMAND=' | grep '/home/$usuario_a_rastrear' | awk '{print $1, $2, $9, $10, $11, $12, $13, $14}'
+			cat /var/log/auth.log | grep 'sudo\|su\|runuser' | grep -E 'COMMAND=' | grep "/home/$usuario_a_rastrear" | awk '{print $1, $2, $9, $10, $11, $12, $13, $14}'
 			;;
 		2)
 			cat /var/log/auth.log | grep 'sudo\|su\|runuser' | grep -E 'COMMAND=' | awk '{print $1, $2, $9, $10, $11, $12, $13, $14}'

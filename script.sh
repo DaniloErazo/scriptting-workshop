@@ -313,13 +313,6 @@ asignacion_deptos() {
     esac
 }
 
-gestion_logs() {
-    clear
-    echo "Menú de gestión de logs"
-    # Lógica para buscar y generar estadísticas en los logs
-}
-
-
 main_menu() {
     clear
     echo "Menú principal de gestión de empresa"
@@ -362,5 +355,6 @@ main_menu() {
 }
 
 main_menu
+source gestion_logs.sh
 source gestion_sistema.sh
 source gestion_actividades.sh
