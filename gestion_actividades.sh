@@ -33,9 +33,8 @@ rastrear_actividades() {
     esac
 }
 
-
-
 actividad_inicio_sesion() {
+	clear
     echo "Actividad de inicio de sesión:"
 	echo "1. Ver la actividad de un usuario"
 	echo "2. Ver toda la actividad"
@@ -64,15 +63,30 @@ actividad_inicio_sesion() {
 }
 
 actividad_comandos_ejecutados() {
+	clear
     echo "Actividad de comandos ejecutados por usuarios:"
-    cat /var/log/auth.log | grep 'sudo\|su\|runuser' | grep -E 'COMMAND=' | awk '{print $1, $2, $9, $10, $11, $12, $13, $14}'
-    read -p "Presione Enter para continuar..."
-    rastrear_actividades
-}
-
-archivos_modificados() {
-    echo "Archivos modificados recientemente por usuarios:"
-    sudo find /home/*/ -type f -not -path '*/\.*' -mtime -1
+    echo "1. Ver los comandos ejecutados de un usuario"
+	echo "2. Ver todos los comandos ejecutados"
+	echo "3. Volver al menu de rastrear actividades"
+	read -p "Seleccione una opción: " opcion
+	
+	case $opcion in
+		1)
+			read -p "Ingrese el nombre del usuario: " usuario_a_rastrear
+			cat /var/log/auth.log | grep 'sudo\|su\|runuser' | grep -E 'COMMAND=' | grep '/home/$usuario_a_rastrear' | awk '{print $1, $2, $9, $10, $11, $12, $13, $14}'
+			;;
+		2)
+			cat /var/log/auth.log | grep 'sudo\|su\|runuser' | grep -E 'COMMAND=' | awk '{print $1, $2, $9, $10, $11, $12, $13, $14}'
+			;;
+		3)
+			rastrear_actividades
+			;;
+		*)
+			echo "Opción no válida."
+			rastrear_actividades
+			;;
+	esac
+			
     read -p "Presione Enter para continuar..."
     rastrear_actividades
 }
@@ -84,5 +98,11 @@ actividad_loggeados() {
     rastrear_actividades
 }
 
+archivos_modificados() {
+    echo "Archivos modificados recientemente por usuarios:"
+    sudo find /home/*/ -type f -not -path '*/\.*' -mtime -1
+    read -p "Presione Enter para continuar..."
+    rastrear_actividades
+}
 
 rastrear_actividades
